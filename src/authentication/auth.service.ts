@@ -16,14 +16,11 @@ export class AuthService {
   ) {}
 
   async loginUser(loginDto: LoginDto): Promise<any> {
-    console.log(loginDto, 'loginDto');
     let { userName, password }: any = loginDto;
-    console.log(userName, password, 'kk');
     const users = await this.prismaService.user.findUnique({
       where: { userName: userName },
     });
 
-    console.log(users);
     if (!users) {
       throw new NotFoundException('User not found');
     }

@@ -13,6 +13,13 @@ export class paymentService {
   }
 
   async createCheckoutSession(data: any) {
+    const customer = await this.stripe.customers.create({
+      metadata: {
+        user_id: data.user.id,
+        // cart: JSON.stringify(data.cartItems.map((item) => item.product)),
+      },
+    });
+
     const line_items = data.cartItems.map((item) => {
       return {
         price_data: {
@@ -49,6 +56,7 @@ export class paymentService {
         phone_number_collection: {
           enabled: true,
         },
+        customer: customer.id,
         line_items,
         mode: 'payment',
         success_url: 'http://localhost:3000/success',

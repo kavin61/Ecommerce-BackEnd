@@ -58,3 +58,22 @@ model Book {
   user      User     @relation(fields: [userId], references: [id])
   product   Product  @relation(fields: [productId], references: [id])
 }
+
+
+model Order {
+  id                String   @id @default(uuid())
+  intentId          String
+  orderId           String
+  amount            Int
+  created           DateTime
+  paymentMethodTypes Json
+  status            String
+  customer          Json
+  shippingDetails   Json
+  userId            String
+  items             Json
+  total             Int
+  sts               String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}

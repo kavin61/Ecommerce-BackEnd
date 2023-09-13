@@ -1,22 +1,30 @@
 // stripe.service.ts
 import { Injectable } from '@nestjs/common';
+import { PrismaService } from 'src/prisma.service';
 import { Stripe } from 'stripe';
 
 @Injectable()
 export class paymentService {
   private stripe: Stripe;
 
-  constructor() {
+  constructor(private prismaService: PrismaService) {
     this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
       apiVersion: '2023-08-16',
     });
   }
 
   async createCheckoutSession(data: any) {
+    let productId = data.cartItems.map((item) => item.product.id);
+    let totalPrice = data.cartItems.reduce(
+      (acc, curr) => acc + curr.product.actualPrice,
+      0,
+    );
+
     const customer = await this.stripe.customers.create({
       metadata: {
-        user_id: data.user.id,
-        // cart: JSON.stringify(data.cartItems.map((item) => item.product)),
+        product_id: JSON.stringify(productId),
+        user_id: data?.user[0]?.id,
+        total_price: totalPrice,
       },
     });
 
@@ -66,6 +74,34 @@ export class paymentService {
       return session;
     } catch (error) {
       throw new Error('Error creating checkout session: ' + error.message);
+    }
+  }
+
+  async createOrder(customer, intent) {
+    try {
+      let orderId = Date.now();
+      const orderData: any = {
+        intentId: intent.id,
+        orderId: orderId.toString(),
+        amount: intent.amount_total,
+        created: new Date(intent.created * 1000),
+        paymentMethodTypes: JSON.stringify(intent.payment_method_types),
+        status: intent.payment_status,
+        customer: JSON.stringify(intent.customer_details),
+        shippingDetails: JSON.stringify(intent.shipping_details),
+        userId: customer.metadata.user_id,
+        items: JSON.stringify(customer.metadata.product_id),
+        total: Number(customer.metadata.total_price),
+        sts: 'pending',
+      };
+
+      const createdOrder = await this.prismaService.order.create({
+        data: orderData,
+      });
+
+      return createdOrder;
+    } catch (error) {
+      console.log(error);
     }
   }
 }

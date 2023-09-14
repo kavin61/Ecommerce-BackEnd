@@ -45,7 +45,9 @@ model Book {
   password String @db.VarChar(200)
   userName String   @unique @db.VarChar(45)
   name String? @db.VarChar(45)
-  user Cart[]
+  user Cart[] 
+  customerStripeId String? 
+  subscriptionPlan String?
  } 
 
  model Cart {

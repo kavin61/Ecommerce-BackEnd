@@ -77,7 +77,89 @@ export class paymentService {
     }
   }
 
-  async createOrder(customer, intent) {
+  async userSubscribe(userData: any) {
+    // const customer = await this.stripe.customers.create(
+    //   {
+    //     email: userData?.email,
+    //   },
+    //   {
+    //     apiKey: process.env.STRIPE_SECRET_KEY,
+    //   },
+    // );
+
+    // console.log(customer.id, 'customeriddddddddd');
+
+    // let updaterUserByStripeId = await this.prismaService.user.update({
+    //   where: {
+    //     id: userData.userId,
+    //   },
+    //   data: {
+    //     customerStripeId: customer.id,
+    //   },
+    // });
+
+    let user = await this.prismaService.user.findUnique({
+      where: {
+        id: userData.userId,
+      },
+    });
+
+    const session = await this.stripe.checkout.sessions.create(
+      {
+        mode: 'subscription',
+        payment_method_types: ['card'],
+        line_items: [
+          {
+            price: userData.priceId,
+            quantity: 1,
+          },
+        ],
+        success_url: 'http://localhost:3000/success',
+        cancel_url: 'http://localhost:4242/cancel',
+        customer: user.customerStripeId,
+      },
+      {
+        apiKey: process.env.STRIPE_SECRET_KEY,
+      },
+    );
+
+    const subscription: any = await this.stripe.subscriptions.list(
+      {
+        customer: user.customerStripeId,
+        status: 'all',
+        expand: ['data.default_payment_method'],
+      },
+      {
+        apiKey: process.env.STRIPE_SECRET_KEY,
+      },
+    );
+    const plan = subscription?.data[0]?.plan?.nickname;
+
+    console.log(plan, 'wwwwwwwwwwww');
+    if (plan == 'Standard') {
+      let updateUserTier: any = await this.prismaService.user.update({
+        where: {
+          id: user.id,
+        },
+        data: {
+          subscriptionPlan: plan,
+        },
+      });
+    } else if (plan == 'Premium') {
+      let updateUserTier: any = await this.prismaService.user.update({
+        where: {
+          id: user.id,
+        },
+        data: {
+          subscriptionPlan: plan,
+        },
+      });
+    }
+
+    return session;
+  }
+
+  async createOrder(customer: any, intent: any) {
     try {
       let orderId = Date.now();
       const orderData: any = {
@@ -103,5 +185,82 @@ export class paymentService {
     } catch (error) {
       console.log(error);
     }
+  }
+
+  async getPrices() {
+    let res = await this.stripe.prices.list({
+      apiKey: process.env.STRIPE_SECRET_KEY,
+    });
+    return res;
+  }
+  async subscribtionDetails(id: string) {
+    let user: any = await this.prismaService.user.findUnique({
+      where: {
+        id: id,
+      },
+    });
+    const subscription: any = await this.stripe.subscriptions.list(
+      {
+        customer: user.customerStripeId,
+        status: 'all',
+        expand: ['data.default_payment_method'],
+      },
+      {
+        apiKey: process.env.STRIPE_SECRET_KEY,
+      },
+    );
+    const plan = subscription?.data[0]?.plan?.nickname;
+    console.log(plan, 'paaaaaaa');
+    if (plan == 'Standard') {
+      let updateUserTier: any = await this.prismaService.user.update({
+        where: {
+          id: user.id,
+        },
+        data: {
+          subscriptionPlan: plan,
+        },
+      });
+
+      let product = await this.prismaService.product.findMany();
+      let discountProduct = product.map((item) => {
+        return {
+          ...item,
+          discountedPercent: 20,
+        };
+      });
+      return discountProduct;
+    } else if (plan == 'Premium') {
+      let updateUserTier: any = await this.prismaService.user.update({
+        where: {
+          id: user.id,
+        },
+        data: {
+          subscriptionPlan: plan,
+        },
+      });
+      let product = await this.prismaService.product.findMany();
+      let discountProduct = product.map((item) => {
+        return {
+          ...item,
+          discountedPercent: 30,
+        };
+      });
+      return discountProduct;
+    } else {
+      let product = await this.prismaService.product.findMany();
+      return product;
+    }
+  }
+
+  async getMyPlan(id: string) {
+    console.log(id);
+    let userPlan = await this.prismaService.user.findUnique({
+      where: {
+        id: id,
+      },
+    });
+    return {
+      userPlan: userPlan.subscriptionPlan,
+    };
   }
 }

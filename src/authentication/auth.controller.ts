@@ -37,7 +37,6 @@ export class AuthController {
     @Body() registerDto: RegisterDto,
   ): Promise<any> {
     try {
-      console.log(registerDto);
       const result = await this.authService.register(registerDto);
       return response.status(200).json({
         status: 'Ok!',

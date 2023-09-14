@@ -9,7 +9,6 @@ export class UsersService {
     return this.prisma.user.findMany();
   }
   async createUser(data: any): Promise<any> {
-    console.log(data, 'kkkk');
     const existing = await this.prisma.user.findUnique({
       where: {
         userName: data.userName,

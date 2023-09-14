@@ -66,9 +66,12 @@ export class BookController {
   async createProduct(@Body() bookData: createProductDto): Promise<any> {
     return this.bookService.createProduct(bookData);
   }
-  @Get('product/:product')
-  async getProduct(@Param('product') product: string): Promise<any> {
-    return this.bookService.getProduct(product);
+  @Get('product/:productId/:userId')
+  async getProduct(
+    @Param('productId') productId: string,
+    @Param('userId') userId: string,
+  ): Promise<any> {
+    return this.bookService.getProduct(productId, userId);
   }
 
   @Get('product')

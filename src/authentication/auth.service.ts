@@ -7,13 +7,19 @@ import * as bcrypt from 'bcrypt';
 import { promises } from 'readline';
 import { RegisterDto } from './dto/register-dto';
 import { Users } from 'src/users/users.model';
+import Stripe from 'stripe';
 @Injectable()
 export class AuthService {
+  private stripe: Stripe;
   constructor(
     private readonly prismaService: PrismaService,
     private jwtService: JwtService,
     private readonly userService: UsersService,
-  ) {}
+  ) {
+    this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: '2023-08-16',
+    });
+  }
 
   async loginUser(loginDto: LoginDto): Promise<any> {
     let { userName, password }: any = loginDto;
@@ -42,7 +48,18 @@ export class AuthService {
     genUser.password = await bcrypt.hash(createDto.password, 10);
     genUser.userName = createDto.userName;
     genUser.email = createDto.email;
-    console.log(genUser);
+
+    const customer = await this.stripe.customers.create(
+      {
+        email: createDto.email,
+      },
+      {
+        apiKey: process.env.STRIPE_SECRET_KEY,
+      },
+    );
+
+    genUser.customerStripeId = customer.id;
+
     const user = await this.userService.createUser(genUser);
 
     return {

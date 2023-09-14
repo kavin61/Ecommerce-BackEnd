@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Get, Req, Res } from '@nestjs/common';
+import { Body, Controller, Post, Get, Req, Res, Param } from '@nestjs/common';
 import { paymentService } from './payment.service';
 import { Request, Response } from 'express';
 import { Stripe } from 'stripe';
@@ -23,6 +23,14 @@ export class PaymentController {
     }
   }
 
+  @Post('subscription')
+  async createSubscription(@Body() data: any) {
+    try {
+      const sub = await this.paymentService.userSubscribe(data);
+      return sub;
+    } catch (error) {}
+  }
+
   @Post('webhook')
   async handleWebhookEvent(@Req() req: Request, @Res() res: Response) {
     const sig = req.headers['stripe-signature'];
@@ -44,5 +52,26 @@ export class PaymentController {
       console.error('Webhook Error:', error);
       res.status(400).send(`Webhook Error: ${error.message}`);
     }
+  }
+
+  @Get('prices')
+  async getPrices() {
+    return this.paymentService.getPrices();
+  }
+
+  @Get('subs/:subs')
+  async subscribtionDetails(@Param('subs') subs: string) {
+    try {
+      return this.paymentService.subscribtionDetails(subs);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  @Get('plan/:id')
+  async getMyCurrentPlan(@Param('id') id: string) {
+    try {
+      return this.paymentService.getMyPlan(id);
+    } catch (error) {}
   }
 }

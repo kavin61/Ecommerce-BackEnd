@@ -14,9 +14,9 @@ export class paymentService {
   }
 
   async createCheckoutSession(data: any) {
-    let productId = data.cartItems.map((item) => item.product.id);
+    let productId = data.cartItems.map((item) => item?.productId);
     let totalPrice = data.cartItems.reduce(
-      (acc, curr) => acc + curr.product.actualPrice,
+      (acc, curr) => acc + curr?.actualPrice,
       0,
     );
 
@@ -33,13 +33,13 @@ export class paymentService {
         price_data: {
           currency: 'inr',
           product_data: {
-            name: item.product.title,
-            images: [item.product.picture],
+            name: item?.title,
+            images: [item?.picture],
             metadata: {
-              id: item.product.id,
+              id: item.productId,
             },
           },
-          unit_amount: item.product.actualPrice * 100,
+          unit_amount: item.actualPrice * 100,
         },
         quantity: 1,
       };
@@ -135,7 +135,6 @@ export class paymentService {
     );
     const plan = subscription?.data[0]?.plan?.nickname;
 
-    console.log(plan, 'wwwwwwwwwwww');
     if (plan == 'Standard') {
       let updateUserTier: any = await this.prismaService.user.update({
         where: {
@@ -210,7 +209,6 @@ export class paymentService {
       },
     );
     const plan = subscription?.data[0]?.plan?.nickname;
-    console.log(plan, 'paaaaaaa');
     if (plan == 'Standard') {
       let updateUserTier: any = await this.prismaService.user.update({
         where: {
@@ -253,7 +251,6 @@ export class paymentService {
   }
 
   async getMyPlan(id: string) {
-    console.log(id);
     let userPlan = await this.prismaService.user.findUnique({
       where: {
         id: id,

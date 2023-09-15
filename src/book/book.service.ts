@@ -25,7 +25,6 @@ export class BookService {
         id: userId,
       },
     });
-    console.log(findUserTier, 'findUserTier');
     if (findUserTier.subscriptionPlan === 'Standard') {
       try {
         let res = await this.prisma.product.findUnique({

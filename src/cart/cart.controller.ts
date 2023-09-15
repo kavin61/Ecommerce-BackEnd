@@ -24,6 +24,20 @@ export class CartController {
     return await this.cartService.addToCart(userId, cartData);
   }
 
+  @Delete('add/:id')
+  async deleteCartItemById(@Param('id') id: string) {
+    return this.cartService.deleteCartItemById(id);
+  }
+  @Post('add/:userId')
+  async updateCart(@Param('userId') userId: string, @Body() data: any) {
+    return this.cartService.updateCart(data, userId);
+  }
+
+  @Get('updated/:userId')
+  async getUpdateCartById(@Param('userId') userId: string) {
+    return this.cartService.getUpdateCartById(userId);
+  }
+
   @Get(':userId')
   async getCartItems(@Param('userId') userId: string) {
     return await this.cartService.getCartItems(userId);
